@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import request from '@/utils/request';
+import { ElMessage } from 'element-plus';
 
 export const useAiStore = defineStore('ai', {
   state: () => ({
@@ -26,7 +27,10 @@ export const useAiStore = defineStore('ai', {
     generatedContent: null,
     currentMessageId: null,
     completionSavedList: [],
-    type: 'chat'
+    type: 'chat',
+    completionContent: null,
+    workflowContent: null,
+    isLoadingApp: false
   }),
 
   getters: {
@@ -490,6 +494,132 @@ export const useAiStore = defineStore('ai', {
       };
       
       return fileTypes.map(type => mimeTypes[type] || '').filter(Boolean).join(',');
+    },
+
+    async generateCompletion(content) {
+      if (!content.trim()) return;
+      
+      try {
+        this.isLoadingMessage = true;
+        
+        const files = this.uploadingFiles.map((file) => {
+          return {
+            type: file.type,
+            transferMethod: file.url ? 'remoteUrl' : 'localFile',
+            ...(file.url ? { url: file.url } : { uploadFileId: file.uploadFileId })
+          };
+        });
+        
+        const response = await request({
+          url: '/ai/completion',
+          method: 'post',
+          headers: {
+            'X-App-ID': this.appId || ''
+          },
+          data: {
+            query: content,
+            responseMode: 'streaming',
+            files: files.length > 0 ? files : undefined,
+            inputs: this.userInputs || {}
+          }
+        });
+        
+        if (response.data) {
+          this.completionContent = response.data.answer || '';
+          
+          this.saveCompletionToHistory({
+            id: Date.now().toString(),
+            content: content,
+            result: this.completionContent,
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        this.clearUploadedFiles();
+      } catch (error) {
+        console.error('Error generating completion:', error);
+        ElMessage.error('生成失败: ' + (error.message || '生成失败，请稍后重试'));
+      } finally {
+        this.isLoadingMessage = false;
+      }
+    },
+
+    async executeWorkflow(content) {
+      if (!content.trim()) return;
+      
+      try {
+        this.isLoadingMessage = true;
+        
+        const files = this.uploadingFiles.map((file) => {
+          return {
+            type: file.type,
+            transferMethod: file.url ? 'remoteUrl' : 'localFile',
+            ...(file.url ? { url: file.url } : { uploadFileId: file.uploadFileId })
+          };
+        });
+        
+        const response = await request({
+          url: '/ai/workflow',
+          method: 'post',
+          headers: {
+            'X-App-ID': this.appId || ''
+          },
+          data: {
+            query: content,
+            responseMode: 'streaming',
+            files: files.length > 0 ? files : undefined,
+            inputs: this.userInputs || {}
+          }
+        });
+        
+        if (response.data) {
+          this.workflowContent = response.data.answer || '';
+          
+          this.saveCompletionToHistory({
+            id: Date.now().toString(),
+            content: content,
+            result: this.workflowContent,
+            timestamp: new Date().toISOString(),
+            type: 'workflow'
+          });
+        }
+        
+        this.clearUploadedFiles();
+      } catch (error) {
+        console.error('Error executing workflow:', error);
+        ElMessage.error('执行失败: ' + (error.message || '执行失败，请稍后重试'));
+      } finally {
+        this.isLoadingMessage = false;
+      }
+    },
+
+    saveCompletionToHistory(item) {
+      this.completionSavedList = [item, ...this.completionSavedList].slice(0, 50);
+      
+      try {
+        localStorage.setItem(`${this.appId}_completion_history`, JSON.stringify(this.completionSavedList));
+      } catch (e) {
+        console.error('Error saving completion history to localStorage:', e);
+      }
+    },
+
+    getCompletionSaved() {
+      try {
+        const saved = localStorage.getItem(`${this.appId}_completion_history`);
+        if (saved) {
+          this.completionSavedList = JSON.parse(saved);
+        }
+      } catch (e) {
+        console.error('Error loading completion history from localStorage:', e);
+      }
+    },
+
+    clearCompletionContent() {
+      this.completionContent = null;
+    },
+
+    clearWorkflowContent() {
+      this.workflowContent = null;
     }
   }
 });
