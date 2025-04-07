@@ -4,7 +4,10 @@ export function sendChatMessage(data) {
   return request({
     url: '/api/ai/dify/chat',
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
 }
 
@@ -12,7 +15,10 @@ export function sendStreamChatMessage(data) {
   return request({
     url: '/api/ai/dify/chat/stream',
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
 }
 
@@ -20,7 +26,10 @@ export function createChat(data) {
   return request({
     url: '/api/ai/dify/chats',
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
 }
 
@@ -36,7 +45,10 @@ export function sendMessageToChat(chatId, data) {
   return request({
     url: `/api/ai/dify/chats/${chatId}/messages`,
     method: 'post',
-    data: data
+    data: data,
+    headers: {
+      'Content-Type': 'application/json'
+    }
   })
 }
 

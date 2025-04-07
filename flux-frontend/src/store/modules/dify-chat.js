@@ -1,9 +1,10 @@
 import { getUserChats, getChatMessages, sendChatMessage, sendMessageToChat, createChat, deleteChat, renameChat } from '@/api/ai/dify'
 import { getToken } from '@/utils/auth'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { defineStore } from 'pinia'
 import { useRoute, useRouter } from 'vue-router'
 import useUserStore from '@/store/modules/user'
+import { getInfo } from '@/api/login'
+import { defineStore } from 'pinia'
 
 const useDifyChatStore = defineStore(
   'dify-chat',
@@ -56,6 +57,20 @@ const useDifyChatStore = defineStore(
         this.isLoadingApp = true;
         
         try {
+          const userStore = useUserStore();
+          if (!userStore.id) {
+            try {
+              const userInfo = await getInfo();
+              if (userInfo && userInfo.user) {
+                console.log("User info loaded successfully");
+              }
+            } catch (error) {
+              console.error("Error loading user info:", error);
+              ElMessage.error('请先登录');
+              return;
+            }
+          }
+          
           await Promise.all([
             this.loadConversations(),
             this.initConversationMessages(),
@@ -289,7 +304,7 @@ const useDifyChatStore = defineStore(
       
       getUserId() {
         const userStore = useUserStore();
-        return userStore.id;
+        return userStore.id || '';
       }
     }
   }
