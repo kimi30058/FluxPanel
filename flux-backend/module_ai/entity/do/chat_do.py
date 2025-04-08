@@ -133,7 +133,7 @@ class ChatMessage(Base, BaseMixin):
         comment="错误信息"
     )
     
-    metadata: Mapped[Optional[Dict]] = mapped_column(
+    message_metadata: Mapped[Optional[Dict]] = mapped_column(
         JSON,
         nullable=True,
         comment="消息元数据"
