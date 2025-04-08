@@ -29,6 +29,7 @@ from module_ai.controller.model_runtime_controller import modelRuntimeController
 from module_ai.controller.model_invoke_controller import modelInvokeController
 from module_ai.controller.ai_provider_controller import aiProviderController
 from module_ai.controller.chat_controller import chatController
+from module_ai.controller.token_controller import tokenController
 
 admin_controllers = [
     {'router': loginController, 'tags': ['登录模块']},
@@ -58,7 +59,8 @@ admin_controllers = [
     {'router': modelRuntimeController, 'tags': ['AI模型-模型运行时']},
     {'router': modelInvokeController, 'tags': ['AI模型-模型调用']},
     {'router': aiProviderController, 'tags': ['AI模型-提供商管理']},
-    {'router': chatController, 'tags': ['AI模型-聊天会话']}
+    {'router': chatController, 'tags': ['AI模型-聊天会话']},
+    {'router': tokenController, 'tags': ['AI模型-Token管理']}
 
 
 ]
