@@ -7,7 +7,7 @@ from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_ai.core.model_runtime.model_providers.model_provider_factory import ModelProviderFactory
 from module_ai.core.model_runtime.entities.model_entities import ModelType
 from module_ai.core.model_runtime.entities.message_entities import PromptMessage, PromptMessageTool
-from module_ai.core.model_runtime.entities.embedding_type import EmbeddingInputType
+from core.entities.embedding_type import EmbeddingInputType
 from utils.service_result_util import ServiceResult
 
 
