@@ -350,6 +350,35 @@ async def get_ai_app(
     return ResponseUtil.success(dict_content=result)
 
 
+@aiProviderController.get('/application/{app_id}/context', dependencies=[Depends(CheckUserInterfaceAuth('ai:application:query'))])
+async def get_app_context_settings(
+    request: Request,
+    app_id: int,
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """获取AI应用上下文设置"""
+    app = await AIApplicationService.get_app_by_id(
+        db=query_db,
+        app_id=app_id,
+        current_user=current_user
+    )
+    
+    if not app or app.get("code") != 200:
+        return ResponseUtil.failed(message=f"获取AI应用失败: {app_id}")
+    
+    app_data = app.get("data", {})
+    context_settings = {
+        "max_context_turns": getattr(app_data, "max_context_turns", 10),
+        "max_tokens": getattr(app_data, "max_tokens", 4000),
+        "preserve_system_prompt": getattr(app_data, "preserve_system_prompt", True)
+    }
+    
+    logger.info(f'获取AI应用上下文设置成功: {app_id}')
+    
+    return ResponseUtil.success(dict_content=context_settings)
+
+
 @aiProviderController.post('/application', dependencies=[Depends(CheckUserInterfaceAuth('ai:application:add'))])
 async def add_ai_app(
     request: Request,
