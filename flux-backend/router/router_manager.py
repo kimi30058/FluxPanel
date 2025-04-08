@@ -27,6 +27,8 @@ from module_gen.controller.gen_controller import gen1Controller
 from module_website.controller.home_controller import homeRouter
 from module_ai.controller.model_runtime_controller import modelRuntimeController
 from module_ai.controller.model_invoke_controller import modelInvokeController
+from module_ai.controller.ai_provider_controller import aiProviderController
+from module_ai.controller.chat_controller import chatController
 
 admin_controllers = [
     {'router': loginController, 'tags': ['登录模块']},
@@ -54,7 +56,9 @@ admin_controllers = [
     {'router': studentInfoController, 'tags': ['测试业务']},
     {'router': importController, 'tags': ['导入数据']},
     {'router': modelRuntimeController, 'tags': ['AI模型-模型运行时']},
-    {'router': modelInvokeController, 'tags': ['AI模型-模型调用']}
+    {'router': modelInvokeController, 'tags': ['AI模型-模型调用']},
+    {'router': aiProviderController, 'tags': ['AI模型-提供商管理']},
+    {'router': chatController, 'tags': ['AI模型-聊天会话']}
 
 
 ]

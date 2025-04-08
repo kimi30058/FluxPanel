@@ -1,6 +1,11 @@
 from datetime import datetime
+from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import Column, DateTime, Integer, String
+from sqlalchemy.orm import Mapped, relationship
 from config.database import Base, BaseMixin
+
+if TYPE_CHECKING:
+    from module_ai.entity.do.chat_do import Chat, ChatMessage
 
 
 class SysUser(Base):
@@ -28,6 +33,19 @@ class SysUser(Base):
     create_time = Column(DateTime, comment='创建时间', default=datetime.now())
     update_by = Column(String(64), default='', comment='更新者')
     update_time = Column(DateTime, comment='更新时间', default=datetime.now())
+    remark = Column(String(500), default=None, comment='备注')
+    
+    ai_chats: Mapped[List["Chat"]] = relationship(
+        "Chat",
+        back_populates="user",
+        foreign_keys="Chat.user_id"
+    )
+    
+    ai_chat_messages: Mapped[List["ChatMessage"]] = relationship(
+        "ChatMessage",
+        back_populates="user",
+        foreign_keys="ChatMessage.user_id"
+    )
     remark = Column(String(500), default=None, comment='备注')
 
 
