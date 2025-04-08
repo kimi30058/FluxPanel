@@ -1,10 +1,12 @@
 from typing import Dict, List, Optional, Any, Union
 from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import datetime
 from module_admin.entity.vo.user_vo import CurrentUserModel
 from module_ai.dao.chat_dao import ChatDao, ChatMessageDao
 from module_ai.dao.ai_provider_dao import AIApplicationDao
 from module_ai.entity.do.chat_do import Chat, ChatMessage, MessageRole, MessageStatus
 from module_ai.entity.do.ai_do import AIApplication
+from module_ai.utils.token_utils import TokenUtils
 from utils.service_result_util import ServiceResult
 
 
@@ -313,10 +315,29 @@ class ChatService:
             messages_result = await ChatMessageDao.get_chat_messages(db, chat_id, is_page=False)
             messages = messages_result.get("rows", [])
             
+            max_context_turns = getattr(app, 'max_context_turns', 10)
+            max_tokens = getattr(app, 'max_tokens', 4000)
+            preserve_system_prompt = getattr(app, 'preserve_system_prompt', True)
+            
+            formatted_messages = []
+            for msg in messages:
+                formatted_messages.append({
+                    "role": msg.role,
+                    "content": msg.content
+                })
+            
+            truncated_messages = TokenUtils.truncate_messages_to_fit_context(
+                formatted_messages,
+                system_prompt=chat.system_prompt,
+                max_turns=max_context_turns,
+                max_tokens=max_tokens,
+                preserve_system_prompt=preserve_system_prompt
+            )
+            
             result = await ai_service.send_message(
                 chat_id=chat_id,
                 user_message=content,
-                history_messages=messages,
+                history_messages=truncated_messages,
                 system_prompt=chat.system_prompt,
                 user_id=str(user_id)
             )

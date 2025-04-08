@@ -207,6 +207,27 @@ class AIApplication(Base, BaseMixin):
         comment="应用标签"
     )
     
+    max_context_turns: Mapped[int] = mapped_column(
+        Integer, 
+        nullable=False,
+        default=10,
+        comment="最大上下文轮次"
+    )
+    
+    max_tokens: Mapped[int] = mapped_column(
+        Integer, 
+        nullable=False,
+        default=4000,
+        comment="最大token数"
+    )
+    
+    preserve_system_prompt: Mapped[bool] = mapped_column(
+        Boolean, 
+        nullable=False,
+        default=True,
+        comment="是否始终保留系统提示词"
+    )
+    
     is_enabled: Mapped[bool] = mapped_column(
         Boolean, 
         nullable=False,

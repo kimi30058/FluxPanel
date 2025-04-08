@@ -358,6 +358,13 @@ async def add_ai_app(
     current_user: CurrentUserModel = Depends(LoginService.get_current_user)
 ):
     """添加AI应用"""
+    if 'max_context_turns' not in app_data:
+        app_data['max_context_turns'] = 10
+    if 'max_tokens' not in app_data:
+        app_data['max_tokens'] = 4000
+    if 'preserve_system_prompt' not in app_data:
+        app_data['preserve_system_prompt'] = True
+        
     result = await AIApplicationService.add_app(
         db=query_db,
         app_data=app_data,
