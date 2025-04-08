@@ -2,6 +2,8 @@ import { createWebHashHistory, createRouter } from 'vue-router'
 /* Layout */
 import Layout from '@/layout'
 
+import aiRouter from './modules/ai'
+
 /**
  * Note: 路由配置项
  *
@@ -26,6 +28,7 @@ import Layout from '@/layout'
 
 // 公共路由
 export const constantRoutes = [
+  aiRouter,
   {
     path: '/redirect',
     component: Layout,
