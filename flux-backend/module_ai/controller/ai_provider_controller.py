@@ -395,6 +395,32 @@ async def update_ai_app(
     return ResponseUtil.success(dict_content=result)
 
 
+@aiProviderController.put('/application/{app_id}/context', dependencies=[Depends(CheckUserInterfaceAuth('ai:application:edit'))])
+async def update_app_context_settings(
+    request: Request,
+    app_id: int,
+    context_data: Dict,
+    query_db: AsyncSession = Depends(get_db),
+    current_user: CurrentUserModel = Depends(LoginService.get_current_user)
+):
+    """更新AI应用上下文设置"""
+    context_settings = {
+        "max_context_turns": context_data.get("max_context_turns", 10),
+        "max_tokens": context_data.get("max_tokens", 4000),
+        "preserve_system_prompt": context_data.get("preserve_system_prompt", True)
+    }
+    
+    result = await AIApplicationService.update_app(
+        db=query_db,
+        app_id=app_id,
+        app_data=context_settings,
+        current_user=current_user
+    )
+    logger.info(f'更新AI应用上下文设置成功: {app_id}')
+    
+    return ResponseUtil.success(dict_content=result)
+
+
 @aiProviderController.delete('/application', dependencies=[Depends(CheckUserInterfaceAuth('ai:application:remove'))])
 async def delete_ai_app(
     request: Request,
