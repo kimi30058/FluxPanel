@@ -25,6 +25,7 @@ from module_admin.controller.user_controller import userController
 from module_app.controller.app_login_controller import appLoginController
 from module_gen.controller.gen_controller import gen1Controller
 from module_website.controller.home_controller import homeRouter
+from module_ai.controller.model_runtime_controller import modelRuntimeController
 
 admin_controllers = [
     {'router': loginController, 'tags': ['登录模块']},
@@ -50,8 +51,8 @@ admin_controllers = [
     {'router': homeRouter, 'tags': ['产品官网']},
     {'router': carDriverController, 'tags': ['测试业务']},
     {'router': studentInfoController, 'tags': ['测试业务']},
-    {'router': importController, 'tags': ['导入数据']}
-
+    {'router': importController, 'tags': ['导入数据']},
+    {'router': modelRuntimeController, 'tags': ['AI模型-模型运行时']}
 
 
 ]
