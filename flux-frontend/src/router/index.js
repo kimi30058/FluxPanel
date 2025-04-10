@@ -89,6 +89,38 @@ export const constantRoutes = [
 // 动态路由，基于用户权限动态去加载
 export const dynamicRoutes = [
   {
+    path: '/ai',
+    component: Layout,
+    name: 'AI',
+    meta: { title: 'AI管理', icon: 'robot' },
+    children: [
+      {
+        path: 'provider',
+        component: () => import('@/views/ai/provider/index'),
+        name: 'Provider',
+        meta: { title: 'AI提供商', icon: 'cloud' }
+      },
+      {
+        path: 'model',
+        component: () => import('@/views/ai/model/index'),
+        name: 'Model',
+        meta: { title: 'AI模型', icon: 'component' }
+      },
+      {
+        path: 'assistant',
+        component: () => import('@/views/ai/assistant/index'),
+        name: 'Assistant',
+        meta: { title: 'AI助手', icon: 'people' }
+      },
+      {
+        path: 'chat',
+        component: () => import('@/views/ai/chat/index'),
+        name: 'Chat',
+        meta: { title: '对话', icon: 'message' }
+      }
+    ]
+  },
+  {
     path: '/system/user-auth',
     component: Layout,
     hidden: true,
