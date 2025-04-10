@@ -25,4 +25,4 @@ class Model(Base, BaseMixin):
     owned_by = Column(String(100), nullable=True, comment='模型所有者')
     
     provider = relationship("Provider", backref="models")
-    types = relationship("String", secondary=model_type)
+    types = relationship("ModelType", secondary=model_type, collection_class=list)
