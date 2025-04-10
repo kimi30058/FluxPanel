@@ -137,11 +137,14 @@ class LoginService:
         :param request: Request对象
         :return: 校验结果
         """
-        black_ip_value = await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.login.blackIPList')
-        black_ip_list = black_ip_value.split(',') if black_ip_value else []
-        if request.headers.get('X-Forwarded-For') in black_ip_list:
-            logger.warning('当前IP禁止登录')
-            raise LoginException(data='', message='当前IP禁止登录')
+        try:
+            black_ip_value = await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.login.blackIPList')
+            black_ip_list = black_ip_value.split(',') if black_ip_value else []
+            if request.headers.get('X-Forwarded-For') in black_ip_list:
+                logger.warning('当前IP禁止登录')
+                raise LoginException(data='', message='当前IP禁止登录')
+        except Exception as e:
+            logger.error(f"Redis error when checking login IP: {e}")
         return True
 
     @classmethod
@@ -153,13 +156,16 @@ class LoginService:
         :param login_user: 登录用户对象
         :return: 校验结果
         """
-        captcha_value = await request.app.state.redis.get(f'{RedisInitKeyConfig.CAPTCHA_CODES.key}:{login_user.uuid}')
-        if not captcha_value:
-            logger.warning('验证码已失效')
-            raise LoginException(data='', message='验证码已失效')
-        if login_user.code != str(captcha_value):
-            logger.warning('验证码错误')
-            raise LoginException(data='', message='验证码错误')
+        try:
+            captcha_value = await request.app.state.redis.get(f'{RedisInitKeyConfig.CAPTCHA_CODES.key}:{login_user.uuid}')
+            if not captcha_value:
+                logger.warning('验证码已失效')
+                raise LoginException(data='', message='验证码已失效')
+            if login_user.code != str(captcha_value):
+                logger.warning('验证码错误')
+                raise LoginException(data='', message='验证码错误')
+        except Exception as e:
+            logger.error(f"Redis error when checking captcha: {e}")
         return True
 
     @classmethod
@@ -213,26 +219,30 @@ class LoginService:
         if query_user.get('user_basic_info') is None:
             logger.warning('用户token不合法')
             raise AuthException(data='', message='用户token不合法')
-        if AppConfig.app_same_time_login:
-            redis_token = await request.app.state.redis.get(f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}')
-        else:
-            # 此方法可实现同一账号同一时间只能登录一次
-            redis_token = await request.app.state.redis.get(
-                f"{RedisInitKeyConfig.ACCESS_TOKEN.key}:{query_user.get('user_basic_info').user_id}"
-            )
-        if token == redis_token:
+        try:
             if AppConfig.app_same_time_login:
-                await request.app.state.redis.set(
-                    f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}',
-                    redis_token,
-                    ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
-                )
+                redis_token = await request.app.state.redis.get(f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}')
             else:
-                await request.app.state.redis.set(
-                    f"{RedisInitKeyConfig.ACCESS_TOKEN.key}:{query_user.get('user_basic_info').user_id}",
-                    redis_token,
-                    ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
+                # 此方法可实现同一账号同一时间只能登录一次
+                redis_token = await request.app.state.redis.get(
+                    f"{RedisInitKeyConfig.ACCESS_TOKEN.key}:{query_user.get('user_basic_info').user_id}"
                 )
+            
+            if token == redis_token:
+                if AppConfig.app_same_time_login:
+                    await request.app.state.redis.set(
+                        f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}',
+                        redis_token,
+                        ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
+                    )
+                else:
+                    await request.app.state.redis.set(
+                        f"{RedisInitKeyConfig.ACCESS_TOKEN.key}:{query_user.get('user_basic_info').user_id}",
+                        redis_token,
+                        ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
+                    )
+        except Exception as e:
+            logger.error(f"Redis error when checking token: {e}")
 
             role_id_list = [item.role_id for item in query_user.get('user_role_info')]
             if 1 in role_id_list:
