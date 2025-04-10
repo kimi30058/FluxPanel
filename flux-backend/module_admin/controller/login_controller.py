@@ -26,12 +26,16 @@ loginController = APIRouter()
 async def login(
     request: Request, form_data: CustomOAuth2PasswordRequestForm = Depends(), query_db: AsyncSession = Depends(get_db)
 ):
-    captcha_enabled = (
-        True
-        if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
-        == 'true'
-        else False
-    )
+    try:
+        captcha_enabled = (
+            True
+            if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
+            == 'true'
+            else False
+        )
+    except Exception as e:
+        logger.error(f"Redis error when getting captcha config: {e}")
+        captcha_enabled = False
     user = UserLogin(
         userName=form_data.username,
         password=form_data.password,
@@ -53,19 +57,22 @@ async def login(
         },
         expires_delta=access_token_expires,
     )
-    if AppConfig.app_same_time_login:
-        await request.app.state.redis.set(
-            f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}',
-            access_token,
-            ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
-        )
-    else:
-        # 此方法可实现同一账号同一时间只能登录一次
-        await request.app.state.redis.set(
-            f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{result[0].user_id}',
-            access_token,
-            ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
-        )
+    try:
+        if AppConfig.app_same_time_login:
+            await request.app.state.redis.set(
+                f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{session_id}',
+                access_token,
+                ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
+            )
+        else:
+            # 此方法可实现同一账号同一时间只能登录一次
+            await request.app.state.redis.set(
+                f'{RedisInitKeyConfig.ACCESS_TOKEN.key}:{result[0].user_id}',
+                access_token,
+                ex=timedelta(minutes=JwtConfig.jwt_redis_expire_minutes),
+            )
+    except Exception as e:
+        logger.error(f"Redis error when storing token: {e}")
     await UserService.edit_user_services(
         query_db, EditUserModel(userId=result[0].user_id, loginDate=datetime.now(), type='status')
     )
