@@ -8,7 +8,7 @@ model_type = Table(
     'ai_model_type',
     Base.metadata,
     Column('model_id', Integer, ForeignKey('ai_model.id', ondelete='CASCADE'), primary_key=True),
-    Column('type', String(50), primary_key=True)
+    Column('type_id', Integer, ForeignKey('ai_model_type_enum.id', ondelete='CASCADE'), primary_key=True)
 )
 
 
