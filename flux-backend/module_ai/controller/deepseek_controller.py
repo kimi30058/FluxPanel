@@ -100,7 +100,8 @@ async def chat_stream_endpoint(
                 ) as response:
                     if response.status_code != 200:
                         error_detail = await response.aread()
-                        yield f"data: {json.dumps({'error': f'DeepSeek API错误: {error_detail.decode(\"utf-8\")}'})} \n\n"
+                        error_msg = f'DeepSeek API错误: {error_detail.decode("utf-8")}'
+                        yield f"data: {json.dumps({'error': error_msg})} \n\n"
                         return
                     
                     async for chunk in response.aiter_text():
