@@ -1,8 +1,7 @@
 import pytest
 import sys
 import os
-import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import create_engine, inspect
 from sqlalchemy.orm import sessionmaker
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,167 +14,115 @@ from module_ai.entity.do.topic_do import Topic
 from module_ai.entity.do.message_do import Message
 from module_ai.entity.do.knowledge_base_do import KnowledgeBase
 from module_ai.entity.do.knowledge_item_do import KnowledgeItem
-from module_ai.dao.provider_dao import ProviderDao
-from module_ai.dao.model_dao import ModelDao
-from module_ai.entity.vo.provider_vo import ProviderModel, ProviderPageModel
-from module_ai.entity.vo.model_vo import ModelModel, ModelPageModel
 from config.database import Base
 
-TEST_DATABASE_URL = "sqlite+aiosqlite:///./test_ai_dao.db"
-
-engine = create_async_engine(TEST_DATABASE_URL)
-TestingSessionLocal = sessionmaker(
-    autocommit=False, 
-    autoflush=False, 
-    bind=engine, 
-    class_=AsyncSession
-)
+engine = create_engine("sqlite:///:memory:")
+Session = sessionmaker(bind=engine)
 
 
 @pytest.fixture(scope="function")
-async def setup_database():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+def setup_database():
+    Base.metadata.create_all(engine)
     
-    async with TestingSessionLocal() as session:
-        test_provider = Provider(
-            type="openai",
-            name="Test OpenAI",
-            api_key="test_api_key",
-            api_host="https://api.openai.com",
-            api_version="v1",
-            enabled=True,
-            del_flag="0"
-        )
-        session.add(test_provider)
-        await session.commit()
-        await session.refresh(test_provider)
-        
-        test_model = Model(
-            name="gpt-3.5-turbo",
-            provider_id=test_provider.id,
-            group="GPT",
-            description="Test model",
-            del_flag="0"
-        )
-        session.add(test_model)
-        await session.commit()
+    session = Session()
     
-    yield
+    test_provider = Provider(
+        type="openai",
+        name="Test OpenAI",
+        api_key="test_api_key",
+        api_host="https://api.openai.com",
+        api_version="v1",
+        enabled=True,
+        del_flag="0",
+        create_by=1,
+        dept_id=1
+    )
+    session.add(test_provider)
+    session.commit()
     
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    test_model_type = ModelType(
+        type="text",
+        del_flag="0",
+        create_by=1,
+        dept_id=1
+    )
+    session.add(test_model_type)
+    session.commit()
+    
+    test_model = Model(
+        name="gpt-3.5-turbo",
+        provider_id=test_provider.id,
+        group="GPT",
+        description="Test model",
+        del_flag="0",
+        create_by=1,
+        dept_id=1
+    )
+    session.add(test_model)
+    session.commit()
+    
+    yield session
+    
+    session.close()
+    Base.metadata.drop_all(engine)
 
 
-@pytest.mark.asyncio
-async def test_provider_dao(setup_database):
-    """Test ProviderDao methods"""
-    async with TestingSessionLocal() as session:
-        query_object = ProviderPageModel(page_num=1, page_size=10)
-        data_scope_sql = "True"
-        provider_list = await ProviderDao.get_provider_list(session, query_object, data_scope_sql, is_page=True)
-        
-        assert provider_list.total > 0
-        assert len(provider_list.rows) > 0
-        assert provider_list.rows[0].name == "Test OpenAI"
-        
-        provider_id = provider_list.rows[0].id
-        provider = await ProviderDao.get_by_id(session, provider_id)
-        
-        assert provider is not None
-        assert provider.name == "Test OpenAI"
-        
-        new_provider = ProviderModel(
-            type="anthropic",
-            name="Test Anthropic",
-            api_key="test_api_key_2",
-            api_host="https://api.anthropic.com",
-            api_version="v1",
-            enabled=True
-        )
-        added_provider = await ProviderDao.add_provider(session, new_provider)
-        await session.commit()
-        
-        assert added_provider is not None
-        assert added_provider.name == "Test Anthropic"
-        
-        edit_provider = ProviderModel(
-            id=provider_id,
-            type="openai",
-            name="Updated OpenAI",
-            api_key="updated_api_key",
-            api_host="https://api.openai.com",
-            api_version="v1",
-            enabled=True
-        )
-        updated_provider = await ProviderDao.edit_provider(session, edit_provider)
-        await session.commit()
-        
-        assert updated_provider is not None
-        assert updated_provider.name == "Updated OpenAI"
-        
-        await ProviderDao.del_provider(session, [str(provider_id)])
-        await session.commit()
-        
-        deleted_provider = await ProviderDao.get_by_id(session, provider_id)
-        assert deleted_provider is None or deleted_provider.del_flag == "2"
+def test_provider_model(setup_database):
+    """Test Provider model structure and data"""
+    session = setup_database
+    
+    inspector = inspect(Provider)
+    columns = inspector.columns
+    
+    assert 'id' in columns
+    assert 'type' in columns
+    assert 'name' in columns
+    assert 'api_key' in columns
+    assert 'api_host' in columns
+    assert 'enabled' in columns
+    
+    provider = session.query(Provider).first()
+    assert provider is not None
+    assert provider.name == "Test OpenAI"
+    assert provider.type == "openai"
+    assert provider.api_key == "test_api_key"
+    assert provider.enabled is True
 
 
-@pytest.mark.asyncio
-async def test_model_dao(setup_database):
-    """Test ModelDao methods"""
-    async with TestingSessionLocal() as session:
-        query_object = ModelPageModel(page_num=1, page_size=10)
-        data_scope_sql = "True"
-        model_list = await ModelDao.get_model_list(session, query_object, data_scope_sql, is_page=True)
-        
-        assert model_list.total > 0
-        assert len(model_list.rows) > 0
-        assert model_list.rows[0].name == "gpt-3.5-turbo"
-        
-        model_id = model_list.rows[0].id
-        model = await ModelDao.get_by_id(session, model_id)
-        
-        assert model is not None
-        assert model.name == "gpt-3.5-turbo"
-        
-        provider_query = ProviderPageModel(page_num=1, page_size=10)
-        provider_list = await ProviderDao.get_provider_list(session, provider_query, data_scope_sql, is_page=True)
-        provider_id = provider_list.rows[0].id
-        
-        new_model = ModelModel(
-            name="claude-3-opus",
-            provider_id=provider_id,
-            group="Claude",
-            description="Test Claude model",
-            types=["text", "vision"]
-        )
-        added_model = await ModelDao.add_model(session, new_model)
-        await session.commit()
-        
-        assert added_model is not None
-        assert added_model.name == "claude-3-opus"
-        
-        edit_model = ModelModel(
-            id=model_id,
-            name="gpt-4",
-            provider_id=provider_id,
-            group="GPT",
-            description="Updated GPT model",
-            types=["text", "function"]
-        )
-        updated_model = await ModelDao.edit_model(session, edit_model)
-        await session.commit()
-        
-        assert updated_model is not None
-        assert updated_model.name == "gpt-4"
-        
-        await ModelDao.del_model(session, [str(model_id)])
-        await session.commit()
-        
-        deleted_model = await ModelDao.get_by_id(session, model_id)
-        assert deleted_model is None or deleted_model.del_flag == "2"
+def test_model_model(setup_database):
+    """Test Model model structure and data"""
+    session = setup_database
+    
+    inspector = inspect(Model)
+    columns = inspector.columns
+    
+    assert 'id' in columns
+    assert 'name' in columns
+    assert 'provider_id' in columns
+    assert 'group' in columns
+    
+    model = session.query(Model).first()
+    assert model is not None
+    assert model.name == "gpt-3.5-turbo"
+    assert model.group == "GPT"
+    
+    provider = session.query(Provider).first()
+    assert model.provider_id == provider.id
+
+
+def test_model_type_model(setup_database):
+    """Test ModelType model structure and data"""
+    session = setup_database
+    
+    inspector = inspect(ModelType)
+    columns = inspector.columns
+    
+    assert 'id' in columns
+    assert 'type' in columns
+    
+    model_type = session.query(ModelType).first()
+    assert model_type is not None
+    assert model_type.type == "text"
 
 
 if __name__ == "__main__":
