@@ -25,7 +25,7 @@ class Message(Base, BaseMixin):
     is_preset = Column(Boolean, default=False, comment='是否预设消息')
     useful = Column(Boolean, nullable=True, comment='是否有用')
     error = Column(JSON, nullable=True, comment='错误信息')
-    metadata = Column(JSON, nullable=True, comment='元数据')
+    meta_data = Column(JSON, nullable=True, comment='元数据')
     
     topic = relationship("Topic", back_populates="messages")
     model = relationship("Model")
