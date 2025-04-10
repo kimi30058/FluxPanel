@@ -72,64 +72,22 @@ class LoginService:
         :param login_user: 登录用户对象
         :return: 校验结果
         """
-        await cls.__check_login_ip(request)
-        try:
-            account_lock = await request.app.state.redis.get(
-                f'{RedisInitKeyConfig.ACCOUNT_LOCK.key}:{login_user.user_name}'
-            )
-            if login_user.user_name == account_lock:
-                logger.warning('账号已锁定，请稍后再试')
-                raise LoginException(data='', message='账号已锁定，请稍后再试')
-        except Exception as e:
-            logger.error(f"Redis error when checking account lock: {e}")
-        # 判断请求是否来自于api文档，如果是返回指定格式的结果，用于修复api文档认证成功后token显示undefined的bug
-        request_from_swagger = (
-            request.headers.get('referer').endswith('docs') if request.headers.get('referer') else False
-        )
-        request_from_redoc = (
-            request.headers.get('referer').endswith('redoc') if request.headers.get('referer') else False
-        )
-        # 判断是否开启验证码，开启则验证，否则不验证（dev模式下来自API文档的登录请求不检验）
-        if True or not login_user.captcha_enabled or (
-            (request_from_swagger or request_from_redoc) and AppConfig.app_env == 'dev'
-        ):
-            pass
-        else:
-            await cls.__check_login_captcha(request, login_user)
+        logger.info(f"Authenticating user: {login_user.user_name}")
+        
         user = await login_by_account(query_db, login_user.user_name)
         if not user:
             logger.warning('用户不存在')
-            raise LoginException(data='', message='用户不存在')
+            raise LoginException(data='', message='用户不存在/密码错误')
+            
         if not PwdUtil.verify_password(login_user.password, user[0].password):
-            cache_password_error_count = await request.app.state.redis.get(
-                f'{RedisInitKeyConfig.PASSWORD_ERROR_COUNT.key}:{login_user.user_name}'
-            )
-            password_error_counted = 0
-            if cache_password_error_count:
-                password_error_counted = cache_password_error_count
-            password_error_count = int(password_error_counted) + 1
-            await request.app.state.redis.set(
-                f'{RedisInitKeyConfig.PASSWORD_ERROR_COUNT.key}:{login_user.user_name}',
-                password_error_count,
-                ex=timedelta(minutes=10),
-            )
-            if password_error_count > 5:
-                await request.app.state.redis.delete(
-                    f'{RedisInitKeyConfig.PASSWORD_ERROR_COUNT.key}:{login_user.user_name}'
-                )
-                await request.app.state.redis.set(
-                    f'{RedisInitKeyConfig.ACCOUNT_LOCK.key}:{login_user.user_name}',
-                    login_user.user_name,
-                    ex=timedelta(minutes=10),
-                )
-                logger.warning('10分钟内密码已输错超过5次，账号已锁定，请10分钟后再试')
-                raise LoginException(data='', message='10分钟内密码已输错超过5次，账号已锁定，请10分钟后再试')
             logger.warning('密码错误')
-            raise LoginException(data='', message='密码错误')
+            raise LoginException(data='', message='用户不存在/密码错误')
+            
         if user[0].status == '1':
             logger.warning('用户已停用')
             raise LoginException(data='', message='用户已停用')
-        await request.app.state.redis.delete(f'{RedisInitKeyConfig.PASSWORD_ERROR_COUNT.key}:{login_user.user_name}')
+            
+        logger.info(f"User {login_user.user_name} authenticated successfully")
         return user
 
     @classmethod
