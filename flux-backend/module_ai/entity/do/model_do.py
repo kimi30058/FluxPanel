@@ -8,7 +8,7 @@ model_type = Table(
     'ai_model_type',
     Base.metadata,
     Column('model_id', Integer, ForeignKey('ai_model.id', ondelete='CASCADE'), primary_key=True),
-    Column('type_id', Integer, ForeignKey('ai_model_type_enum.id', ondelete='CASCADE'), primary_key=True)
+    Column('type', String(50), primary_key=True)
 )
 
 
@@ -25,4 +25,4 @@ class Model(Base, BaseMixin):
     owned_by = Column(String(100), nullable=True, comment='模型所有者')
     
     provider = relationship("Provider", backref="models")
-    types = relationship("ModelType", secondary=model_type, collection_class=list)
+    # types = relationship("ModelType", secondary=model_type, collection_class=list, overlaps="types")
