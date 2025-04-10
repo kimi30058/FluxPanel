@@ -17,6 +17,8 @@ if DataBaseConfig.db_type == 'postgresql':
         f'postgresql+asyncpg://{DataBaseConfig.db_username}:{quote_plus(DataBaseConfig.db_password)}@'
         f'{DataBaseConfig.db_host}:{DataBaseConfig.db_port}/{DataBaseConfig.db_database}'
     )
+elif DataBaseConfig.db_type == 'sqlite':
+    ASYNC_SQLALCHEMY_DATABASE_URL = 'sqlite+aiosqlite:///test_database.db'
 
 async_engine = create_async_engine(
     ASYNC_SQLALCHEMY_DATABASE_URL,
