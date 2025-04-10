@@ -6,7 +6,8 @@ from module_admin.service.login_service import LoginService
 from module_admin.entity.vo.user_vo import UserModel
 from module_ai.entity.vo.topic_vo import TopicModel, TopicPageModel
 from module_ai.service.topic_service import TopicService
-from utils.response_util import ResponseUtil, ResponseCode
+from utils.response_util import ResponseUtil
+from config.constant import HttpStatusConstant
 from config.database import get_db
 
 router = APIRouter(

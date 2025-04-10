@@ -6,7 +6,8 @@ from module_admin.service.login_service import LoginService
 from module_admin.entity.vo.user_vo import UserModel
 from module_ai.entity.vo.knowledge_base_vo import KnowledgeBaseModel, KnowledgeBasePageModel
 from module_ai.service.knowledge_base_service import KnowledgeBaseService
-from utils.response_util import ResponseUtil, ResponseCode
+from utils.response_util import ResponseUtil
+from config.constant import HttpStatusConstant
 from config.database import get_db
 
 router = APIRouter(
