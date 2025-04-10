@@ -41,3 +41,14 @@ class BaseMixin:
     del_flag = Column(String(1), nullable=False, default='0', server_default=text("'0'"), comment='删除标志（0代表存在 2代表删除）')
     create_by = Column(Integer, nullable=False, comment='创建者')
     dept_id = Column(Integer, nullable=False, comment='部门id')
+
+
+async def get_db():
+    """
+    获取数据库会话
+    """
+    async_session = AsyncSessionLocal()
+    try:
+        yield async_session
+    finally:
+        await async_session.close()
