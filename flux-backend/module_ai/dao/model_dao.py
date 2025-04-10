@@ -54,10 +54,20 @@ class ModelDao:
         
         if model_model.types:
             for type_name in model_model.types:
+                from module_ai.entity.do.model_type_do import ModelType
+                type_obj = (await db.execute(
+                    select(ModelType).where(ModelType.type == type_name)
+                )).scalar_one_or_none()
+                
+                if not type_obj:
+                    type_obj = ModelType(type=type_name)
+                    db.add(type_obj)
+                    await db.flush()
+                
                 await db.execute(
                     model_type.insert().values(
                         model_id=db_model.id,
-                        type=type_name
+                        type_id=type_obj.id
                     )
                 )
         
@@ -79,10 +89,20 @@ class ModelDao:
             )
             
             for type_name in model_model.types:
+                from module_ai.entity.do.model_type_do import ModelType
+                type_obj = (await db.execute(
+                    select(ModelType).where(ModelType.type == type_name)
+                )).scalar_one_or_none()
+                
+                if not type_obj:
+                    type_obj = ModelType(type=type_name)
+                    db.add(type_obj)
+                    await db.flush()
+                
                 await db.execute(
                     model_type.insert().values(
                         model_id=model_model.id,
-                        type=type_name
+                        type_id=type_obj.id
                     )
                 )
         
