@@ -10,6 +10,11 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from module_ai.entity.do.provider_do import Provider
 from module_ai.entity.do.model_do import Model
 from module_ai.entity.do.model_type_do import ModelType
+from module_ai.entity.do.assistant_do import Assistant
+from module_ai.entity.do.topic_do import Topic
+from module_ai.entity.do.message_do import Message
+from module_ai.entity.do.knowledge_base_do import KnowledgeBase
+from module_ai.entity.do.knowledge_item_do import KnowledgeItem
 from module_ai.dao.provider_dao import ProviderDao
 from module_ai.dao.model_dao import ModelDao
 from module_ai.entity.vo.provider_vo import ProviderModel, ProviderPageModel
