@@ -26,7 +26,7 @@ async def get_provider_list(
     """
     获取AI提供商列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     provider_list = await ProviderService.get_provider_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(provider_list)
 

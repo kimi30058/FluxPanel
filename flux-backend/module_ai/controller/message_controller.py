@@ -26,7 +26,7 @@ async def get_message_list(
     """
     获取对话消息列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     message_list = await MessageService.get_message_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(message_list)
 

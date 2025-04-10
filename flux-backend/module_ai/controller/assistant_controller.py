@@ -26,7 +26,7 @@ async def get_assistant_list(
     """
     获取AI助手列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     assistant_list = await AssistantService.get_assistant_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(assistant_list)
 

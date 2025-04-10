@@ -26,7 +26,7 @@ async def get_topic_list(
     """
     获取对话主题列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     topic_list = await TopicService.get_topic_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(topic_list)
 

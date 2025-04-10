@@ -26,7 +26,7 @@ async def get_knowledge_item_list(
     """
     获取知识库项目列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     knowledge_item_list = await KnowledgeItemService.get_knowledge_item_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(knowledge_item_list)
 

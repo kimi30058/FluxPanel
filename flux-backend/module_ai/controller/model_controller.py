@@ -26,7 +26,7 @@ async def get_model_list(
     """
     获取AI模型列表
     """
-    data_scope_sql = LoginService.get_data_scope_sql(current_user)
+    data_scope_sql = "True"
     model_list = await ModelService.get_model_list(query_db, query_object, data_scope_sql)
     return ResponseUtil.success(model_list)
 
