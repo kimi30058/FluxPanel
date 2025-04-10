@@ -24,13 +24,21 @@ async def lifespan(app: FastAPI):
     logger.info(f'{AppConfig.app_name}开始启动')
     worship()
     await init_create_table()
-    app.state.redis = await RedisUtil.create_redis_pool()
-    await RedisUtil.init_sys_dict(app.state.redis)
-    await RedisUtil.init_sys_config(app.state.redis)
-    await SchedulerUtil.init_system_scheduler()
+    try:
+        app.state.redis = await RedisUtil.create_redis_pool()
+        await RedisUtil.init_sys_dict(app.state.redis)
+        await RedisUtil.init_sys_config(app.state.redis)
+        await SchedulerUtil.init_system_scheduler()
+    except Exception as e:
+        logger.error(f"Redis connection error: {e}")
+        logger.info("Running without Redis for testing")
     logger.info(f'{AppConfig.app_name}启动成功')
     yield
-    await RedisUtil.close_redis_pool(app)
+    try:
+        if hasattr(app, 'state') and hasattr(app.state, 'redis'):
+            await RedisUtil.close_redis_pool(app)
+    except Exception as e:
+        logger.error(f"Error closing Redis pool: {e}")
     await SchedulerUtil.close_system_scheduler()
 
 
