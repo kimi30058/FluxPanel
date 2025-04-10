@@ -73,12 +73,15 @@ class LoginService:
         :return: 校验结果
         """
         await cls.__check_login_ip(request)
-        account_lock = await request.app.state.redis.get(
-            f'{RedisInitKeyConfig.ACCOUNT_LOCK.key}:{login_user.user_name}'
-        )
-        if login_user.user_name == account_lock:
-            logger.warning('账号已锁定，请稍后再试')
-            raise LoginException(data='', message='账号已锁定，请稍后再试')
+        try:
+            account_lock = await request.app.state.redis.get(
+                f'{RedisInitKeyConfig.ACCOUNT_LOCK.key}:{login_user.user_name}'
+            )
+            if login_user.user_name == account_lock:
+                logger.warning('账号已锁定，请稍后再试')
+                raise LoginException(data='', message='账号已锁定，请稍后再试')
+        except Exception as e:
+            logger.error(f"Redis error when checking account lock: {e}")
         # 判断请求是否来自于api文档，如果是返回指定格式的结果，用于修复api文档认证成功后token显示undefined的bug
         request_from_swagger = (
             request.headers.get('referer').endswith('docs') if request.headers.get('referer') else False
