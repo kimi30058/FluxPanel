@@ -13,25 +13,35 @@ captchaController = APIRouter()
 
 @captchaController.get('/captchaImage')
 async def get_captcha_image(request: Request):
-    captcha_enabled = (
-        True
-        if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
-        == 'true'
-        else False
-    )
-    register_enabled = (
-        True
-        if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.registerUser') == 'true'
-        else False
-    )
+    try:
+        captcha_enabled = (
+            True
+            if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.captchaEnabled')
+            == 'true'
+            else False
+        )
+        register_enabled = (
+            True
+            if await request.app.state.redis.get(f'{RedisInitKeyConfig.SYS_CONFIG.key}:sys.account.registerUser') == 'true'
+            else False
+        )
+    except Exception as e:
+        logger.error(f"Redis error when getting config: {e}")
+        captcha_enabled = False
+        register_enabled = True
+        
     session_id = str(uuid.uuid4())
     captcha_result = await CaptchaService.create_captcha_image_service()
     image = captcha_result[0]
     computed_result = captcha_result[1]
-    await request.app.state.redis.set(
-        f'{RedisInitKeyConfig.CAPTCHA_CODES.key}:{session_id}', computed_result, ex=timedelta(minutes=2)
-    )
-    logger.info(f'编号为{session_id}的会话获取图片验证码成功')
+    
+    try:
+        await request.app.state.redis.set(
+            f'{RedisInitKeyConfig.CAPTCHA_CODES.key}:{session_id}', computed_result, ex=timedelta(minutes=2)
+        )
+        logger.info(f'编号为{session_id}的会话获取图片验证码成功')
+    except Exception as e:
+        logger.error(f"Redis error when setting captcha code: {e}")
 
     return ResponseUtil.success(
         model_content=CaptchaCode(
