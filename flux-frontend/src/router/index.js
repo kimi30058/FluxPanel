@@ -117,6 +117,18 @@ export const dynamicRoutes = [
         component: () => import('@/views/ai/chat/index'),
         name: 'Chat',
         meta: { title: '对话', icon: 'message' }
+      },
+      {
+        path: 'dify-chat',
+        component: () => import('@/views/ai/chat/dify-chat'),
+        name: 'DifyChat',
+        meta: { title: 'DIFY对话', icon: 'message' }
+      },
+      {
+        path: 'deepseek-chat',
+        component: () => import('@/views/ai/chat/deepseek-chat'),
+        name: 'DeepSeekChat',
+        meta: { title: 'DeepSeek对话', icon: 'message' }
       }
     ]
   },

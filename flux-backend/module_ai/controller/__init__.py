@@ -7,6 +7,8 @@ from module_ai.controller.topic_controller import router as topic_router
 from module_ai.controller.message_controller import router as message_router
 from module_ai.controller.knowledge_base_controller import router as knowledge_base_router
 from module_ai.controller.knowledge_item_controller import router as knowledge_item_router
+from module_ai.controller.dify_controller import router as dify_router
+from module_ai.controller.deepseek_controller import router as deepseek_router
 
 router = APIRouter()
 
@@ -17,3 +19,5 @@ router.include_router(topic_router)
 router.include_router(message_router)
 router.include_router(knowledge_base_router)
 router.include_router(knowledge_item_router)
+router.include_router(dify_router)
+router.include_router(deepseek_router)
