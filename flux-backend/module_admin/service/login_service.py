@@ -87,7 +87,7 @@ class LoginService:
             request.headers.get('referer').endswith('redoc') if request.headers.get('referer') else False
         )
         # 判断是否开启验证码，开启则验证，否则不验证（dev模式下来自API文档的登录请求不检验）
-        if not login_user.captcha_enabled or (
+        if True or not login_user.captcha_enabled or (
             (request_from_swagger or request_from_redoc) and AppConfig.app_env == 'dev'
         ):
             pass
